@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react'
-import { fetchWeatherByCity, fetchWeatherByCoords } from './Services/weatherApi'
+import {
+  fetchWeatherByCity,
+  fetchWeatherByCoords,
+  fetchForecastByCity,
+} from './Services/weatherApi'
 import SearchBar from './Components/SearchBar'
 import SearchHistory from './Components/SearchHistory'
 import UnitToggle from './Components/UnitToggle'
@@ -7,12 +11,14 @@ import LocationButton from './Components/LocationButton'
 import Loader from './Components/Loader'
 import ErrorMessage from './Components/ErrorMessage'
 import WeatherCard from './Components/WeatherCard'
+import ForecastStrip from './Components/ForecastStrip'
 
 const HISTORY_KEY = 'weather-search-history'
 const MAX_HISTORY = 5
 
 export default function App() {
   const [weather, setWeather] = useState(null)
+  const [forecast, setForecast] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [units, setUnits] = useState('metric')
@@ -44,11 +50,16 @@ export default function App() {
     setError('')
 
     try {
-      const data = await fetchWeatherByCity(city, unitSystem)
-      setWeather(data)
-      if (saveToHistory) addToHistory(data.city)
+      const [weatherData, forecastData] = await Promise.all([
+        fetchWeatherByCity(city, unitSystem),
+        fetchForecastByCity(city, unitSystem),
+      ])
+      setWeather(weatherData)
+      setForecast(forecastData)
+      if (saveToHistory) addToHistory(weatherData.city)
     } catch (err) {
       setWeather(null)
+      setForecast(null)
       setError(err.message)
     } finally {
       setLoading(false)
@@ -79,11 +90,14 @@ export default function App() {
       async (position) => {
         const { latitude, longitude } = position.coords
         try {
-          const data = await fetchWeatherByCoords(latitude, longitude, units)
-          setWeather(data)
-          addToHistory(data.city)
+          const weatherData = await fetchWeatherByCoords(latitude, longitude, units)
+          const forecastData = await fetchForecastByCity(weatherData.city, units)
+          setWeather(weatherData)
+          setForecast(forecastData)
+          addToHistory(weatherData.city)
         } catch (err) {
           setWeather(null)
+          setForecast(null)
           setError(err.message)
         } finally {
           setLoading(false)
@@ -128,7 +142,10 @@ export default function App() {
           {loading && <Loader />}
           {error && !loading && <ErrorMessage message={error} />}
           {weather && !loading && !error && (
-            <WeatherCard weather={weather} units={units} />
+            <>
+              <WeatherCard weather={weather} units={units} />
+              {forecast && <ForecastStrip forecast={forecast} units={units} />}
+            </>
           )}
           {!weather && !loading && !error && (
             <p className="text-center text-sky-700">

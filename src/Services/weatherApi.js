@@ -56,3 +56,40 @@ export async function fetchWeatherByCoords(lat, lon, units = 'metric') {
     icon: data.weather[0].icon,
   }
 }
+
+export async function fetchForecastByCity(city, units = 'metric') {
+  const url = `${BASE_URL}/forecast?q=${encodeURIComponent(city)}&units=${units}&appid=${API_KEY}`
+  const res = await fetch(url)
+
+  if (!res.ok) {
+    if (res.status === 404) {
+      throw new Error('City not found. Check the spelling and try again.')
+    }
+    if (res.status === 401) {
+      throw new Error('Invalid API key. New keys can take a while to activate.')
+    }
+    throw new Error('Something went wrong. Please try again.')
+  }
+
+  const data = await res.json()
+
+  // The free /forecast endpoint returns data in 3-hour steps (~40 entries
+  // for 5 days). Pick the entry closest to midday for each date, so we
+  // end up with one representative reading per day.
+  const daily = {}
+  data.list.forEach((entry) => {
+    const [date, time] = entry.dt_txt.split(' ')
+    if (!daily[date] || time === '12:00:00') {
+      daily[date] = entry
+    }
+  })
+
+  return Object.entries(daily)
+    .slice(0, 5)
+    .map(([date, entry]) => ({
+      date,
+      temp: Math.round(entry.main.temp),
+      condition: entry.weather[0].main,
+      icon: entry.weather[0].icon,
+    }))
+}

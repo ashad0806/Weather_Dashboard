@@ -1,16 +1,39 @@
-# React + Vite
+# Weather Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A simple weather app built with React, Vite, and Tailwind CSS. Search any city for current conditions, a 5-day forecast, and more.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Search current weather by city name
+- 5-day forecast
+- °C / °F toggle
+- Auto-detect location (Geolocation API)
+- Recent search history (saved in localStorage)
+- Loading and error states
 
-## React Compiler
+## Tech stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React + Vite
+- Tailwind CSS
+- [OpenWeatherMap API](https://openweathermap.org/api)
 
-## Expanding the Oxlint configuration
+## Setup
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+1. Clone the repo:
+```bash
+   git clone https://github.com/ashad0806/Weather_Dashboard.git
+   cd Weather_Dashboard
+```
+2. Install dependencies:
+```bash
+   npm install
+```
+3. Create a `.env` file in the project root:
+
+VITE_WEATHER_API_KEY=your_api_key_here
+
+   Get a free key at [openweathermap.org](https://openweathermap.org/api).
+4. Run the dev server:
+```bash
+   npm run dev
+```

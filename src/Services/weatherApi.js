@@ -30,3 +30,29 @@ export async function fetchWeatherByCity(city, units = 'metric') {
     icon: data.weather[0].icon,
   }
 }
+
+export async function fetchWeatherByCoords(lat, lon, units = 'metric') {
+  const url = `${BASE_URL}/weather?lat=${lat}&lon=${lon}&units=${units}&appid=${API_KEY}`
+  const res = await fetch(url)
+
+  if (!res.ok) {
+    if (res.status === 401) {
+      throw new Error('Invalid API key. New keys can take a while to activate.')
+    }
+    throw new Error('Something went wrong. Please try again.')
+  }
+
+  const data = await res.json()
+
+  return {
+    city: data.name,
+    country: data.sys.country,
+    temp: Math.round(data.main.temp),
+    feelsLike: Math.round(data.main.feels_like),
+    condition: data.weather[0].main,
+    description: data.weather[0].description,
+    humidity: data.main.humidity,
+    wind: data.wind.speed,
+    icon: data.weather[0].icon,
+  }
+}

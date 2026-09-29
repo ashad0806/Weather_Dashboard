@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { fetchWeatherByCity } from './Services/weatherApi'
+import { fetchWeatherByCity, fetchWeatherByCoords } from './Services/weatherApi'
 import SearchBar from './Components/SearchBar'
 import SearchHistory from './Components/SearchHistory'
 import UnitToggle from './Components/UnitToggle'
+import LocationButton from './Components/LocationButton'
 import Loader from './Components/Loader'
 import ErrorMessage from './Components/ErrorMessage'
 import WeatherCard from './Components/WeatherCard'
@@ -65,6 +66,36 @@ export default function App() {
 
   const handleClearHistory = () => setHistory([])
 
+  const handleLocate = () => {
+    if (!navigator.geolocation) {
+      setError('Geolocation is not supported by your browser.')
+      return
+    }
+
+    setLoading(true)
+    setError('')
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords
+        try {
+          const data = await fetchWeatherByCoords(latitude, longitude, units)
+          setWeather(data)
+          addToHistory(data.city)
+        } catch (err) {
+          setWeather(null)
+          setError(err.message)
+        } finally {
+          setLoading(false)
+        }
+      },
+      () => {
+        setError('Location access was denied. Please allow it or search manually.')
+        setLoading(false)
+      }
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-200 to-sky-50 px-4 py-10">
       <div className="mx-auto max-w-md">
@@ -73,6 +104,10 @@ export default function App() {
         </h1>
 
         <SearchBar onSearch={handleSearch} loading={loading} />
+
+        <div className="mt-2 flex justify-center">
+          <LocationButton onLocate={handleLocate} loading={loading} />
+        </div>
 
         <SearchHistory
           history={history}

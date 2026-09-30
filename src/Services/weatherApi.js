@@ -1,6 +1,23 @@
 const API_KEY = import.meta.env.VITE_WEATHER_API_KEY
 const BASE_URL = 'https://api.openweathermap.org/data/2.5'
 
+function shapeWeatherData(data) {
+  return {
+    city: data.name,
+    country: data.sys.country,
+    temp: Math.round(data.main.temp),
+    feelsLike: Math.round(data.main.feels_like),
+    condition: data.weather[0].main,
+    description: data.weather[0].description,
+    humidity: data.main.humidity,
+    wind: data.wind.speed,
+    windGust: data.wind.gust ? Math.round(data.wind.gust * 10) / 10 : null,
+    icon: data.weather[0].icon,
+    lat: data.coord.lat,
+    lon: data.coord.lon,
+  }
+}
+
 export async function fetchWeatherByCity(city, units = 'metric') {
   const url = `${BASE_URL}/weather?q=${encodeURIComponent(city)}&units=${units}&appid=${API_KEY}`
   const res = await fetch(url)
@@ -16,19 +33,7 @@ export async function fetchWeatherByCity(city, units = 'metric') {
   }
 
   const data = await res.json()
-
-  // Return only what the UI needs, in a clean shape
-  return {
-    city: data.name,
-    country: data.sys.country,
-    temp: Math.round(data.main.temp),
-    feelsLike: Math.round(data.main.feels_like),
-    condition: data.weather[0].main,
-    description: data.weather[0].description,
-    humidity: data.main.humidity,
-    wind: data.wind.speed,
-    icon: data.weather[0].icon,
-  }
+  return shapeWeatherData(data)
 }
 
 export async function fetchWeatherByCoords(lat, lon, units = 'metric') {
@@ -43,18 +48,7 @@ export async function fetchWeatherByCoords(lat, lon, units = 'metric') {
   }
 
   const data = await res.json()
-
-  return {
-    city: data.name,
-    country: data.sys.country,
-    temp: Math.round(data.main.temp),
-    feelsLike: Math.round(data.main.feels_like),
-    condition: data.weather[0].main,
-    description: data.weather[0].description,
-    humidity: data.main.humidity,
-    wind: data.wind.speed,
-    icon: data.weather[0].icon,
-  }
+  return shapeWeatherData(data)
 }
 
 export async function fetchForecastByCity(city, units = 'metric') {
@@ -73,9 +67,6 @@ export async function fetchForecastByCity(city, units = 'metric') {
 
   const data = await res.json()
 
-  // The free /forecast endpoint returns data in 3-hour steps (~40 entries
-  // for 5 days). Pick the entry closest to midday for each date, so we
-  // end up with one representative reading per day.
   const daily = {}
   data.list.forEach((entry) => {
     const [date, time] = entry.dt_txt.split(' ')
@@ -92,4 +83,29 @@ export async function fetchForecastByCity(city, units = 'metric') {
       condition: entry.weather[0].main,
       icon: entry.weather[0].icon,
     }))
+}
+
+const AQI_LABELS = {
+  1: 'Excellent',
+  2: 'Good',
+  3: 'Moderate',
+  4: 'Poor',
+  5: 'Very Poor',
+}
+
+export async function fetchAirQuality(lat, lon) {
+  const url = `${BASE_URL}/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`
+  const res = await fetch(url)
+
+  if (!res.ok) {
+    throw new Error('Could not load air quality data.')
+  }
+
+  const data = await res.json()
+  const aqi = data.list[0].main.aqi // 1 (best) to 5 (worst)
+
+  return {
+    aqi,
+    label: AQI_LABELS[aqi] || 'Unknown',
+  }
 }
